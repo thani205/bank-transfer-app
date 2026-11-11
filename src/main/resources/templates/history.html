@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Transaction History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f4f6f9;
+            color: #222;
+        }
+        h1 { color: #17365d; }
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background: #17365d; color: white; }
+        a { color: #17365d; }
+    </style>
+</head>
+<body>
+
+<h1>Account Transaction History</h1>
+
+<section>
+    <h2>Account Number: <span th:text="${accountNumber}"></span></h2>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Transaction ID</th>
+            <th>Date</th>
+            <th>From Account</th>
+            <th>To Account</th>
+            <th>Amount (LKR)</th>
+            <th>Status</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="transaction : ${transactions}">
+            <td th:text="${transaction.id}"></td>
+            <td th:text="${transaction.createdAt}"></td>
+            <td th:text="${transaction.fromAccount}"></td>
+            <td th:text="${transaction.toAccount}"></td>
+            <td th:text="${transaction.amount}"></td>
+            <td th:text="${transaction.status}"></td>
+            <td th:text="${transaction.description}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <br>
+    <a href="/">Back to Dashboard</a>
+</section>
+
+</body>
+</html>
