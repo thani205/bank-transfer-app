@@ -26,69 +26,58 @@ public class BankService {
     private final CustomerRepository customerRepository;
     private final BankTransactionRepository transactionRepository;
 
-    // Get all customers
+    // Get All Customers
     public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+        return customerRepository.findAllOrdered();
     }
 
-    // Search customers by name
+    // Search Customers
     public List<Customer> searchCustomers(String keyword) {
         return customerRepository.searchByName(keyword);
     }
 
-    // Get all customers ordered by name
-    public List<Customer> getCustomersOrdered() {
-        return customerRepository.findAllOrdered();
-    }
-
-    // Get total bank balance
-    public BigDecimal getTotalBalance() {
-        return customerRepository.getTotalBalance();
-    }
-
-    // Get latest transactions
+    // Get Latest Transactions
     public List<BankTransaction> getLatestTransactions() {
         return transactionRepository.findAllLatest();
     }
 
-    // Get account transaction history
+    // Get Total Balance
+    public BigDecimal getTotalBalance() {
+        return customerRepository.getTotalBalance();
+    }
+
+    // Get Successful Transaction Count
+    public long getSuccessCount() {
+        return transactionRepository.countByStatus(TransactionStatus.SUCCESS);
+    }
+
+    // Get Failed Transaction Count
+    public long getFailedCount() {
+        return transactionRepository.countByStatus(TransactionStatus.FAILED);
+    }
+
+    // Get Account History
     public List<BankTransaction> getAccountHistory(String accountNumber) {
         return transactionRepository.findHistory(accountNumber);
     }
 
-    // Count successful transactions
-    public long getSuccessCount() {
-        return transactionRepository.countByStatus(
-                TransactionStatus.SUCCESS);
-    }
-
-    // Count failed transactions
-    public long getFailedCount() {
-        return transactionRepository.countByStatus(
-                TransactionStatus.FAILED);
-    }
-
-    // Create customer
+    // Create Customer
     @Transactional
     public Customer createCustomer(Customer customer) {
 
-        if (customerRepository.countAccounts(
-                customer.getAccountNumber()) > 0) {
-            throw new InvalidTransactionException(
-                    "Account number already exists");
+        if (customerRepository.existsByAccountNumber(customer.getAccountNumber())) {
+            throw new RuntimeException("Account number already exists");
         }
 
-        if (customerRepository.countEmails(
-                customer.getEmail()) > 0) {
-            throw new InvalidTransactionException(
-                    "Email already exists");
+        if (customerRepository.existsByEmail(customer.getEmail())) {
+            throw new RuntimeException("Email already exists");
         }
 
         return customerRepository.save(customer);
     }
 
-    // Bank transfer
-    @Transactional(rollbackFor = Exception.class)
+    // Transfer Money
+        @Transactional(rollbackFor = Exception.class)
     public BankTransaction transfer(
             String fromAccount,
             String toAccount,
@@ -107,44 +96,37 @@ public class BankService {
 
         Customer sender = customerRepository
                 .getByAccountNumber(fromAccount)
-                .orElseThrow(() ->
-                        new AccountNotFoundException(
-                                "Sender account not found"));
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "Sender account not found"));
 
         Customer receiver = customerRepository
                 .getByAccountNumber(toAccount)
-                .orElseThrow(() ->
-                        new AccountNotFoundException(
-                                "Receiver account not found"));
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "Receiver account not found"));
 
-        // Step 1: Debit sender account
-        int debited = customerRepository.debit(fromAccount, amount);
-
-        if (debited == 0) {
-            throw new InsufficientBalanceException(
-                    "Insufficient balance");
+        if (sender.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance");
         }
 
-        // Step 2: Simulate system failure
+        // Debit sender
+        sender.setBalance(sender.getBalance().subtract(amount));
+        customerRepository.save(sender);
+
+        // Simulate system failure
         if (simulateFailure) {
-            throw new InvalidTransactionException(
-                    "Simulated system failure");
+            throw new RuntimeException("Simulated system failure");
         }
 
-        // Step 3: Credit receiver account
-        int credited = customerRepository.credit(toAccount, amount);
+        // Credit receiver
+        receiver.setBalance(receiver.getBalance().add(amount));
+        customerRepository.save(receiver);
 
-        if (credited == 0) {
-            throw new AccountNotFoundException(
-                    "Receiver account not found");
-        }
-
-        // Step 4: Save successful transaction
+        // Create successful transaction record
         BankTransaction transaction = new BankTransaction();
 
-        transaction.setAmount(amount);
         transaction.setFromAccount(fromAccount);
         transaction.setToAccount(toAccount);
+        transaction.setAmount(amount);
         transaction.setCreatedAt(LocalDateTime.now());
         transaction.setDescription("Bank transfer");
         transaction.setStatus(TransactionStatus.SUCCESS);

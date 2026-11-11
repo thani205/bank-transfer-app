@@ -14,53 +14,54 @@ import com.example.bankapp.model.Customer;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
-    // 1. JPQL - Find customer by account number
-    @Query("SELECT c FROM Customer c WHERE c.accountNumber = :accountNumber")
-    Optional<Customer> getByAccountNumber(@Param("accountNumber") String accountNumber);
+    // Get customer by account number
+    Optional<Customer> getByAccountNumber(String accountNumber);
 
+    // Check whether account number already exists
+    boolean existsByAccountNumber(String accountNumber);
 
-    // 2. JPQL COUNT - Count accounts
-    @Query("SELECT COUNT(c) FROM Customer c WHERE c.accountNumber = :accountNumber")
-    long countAccounts(@Param("accountNumber") String accountNumber);
+    // Check whether email already exists
+    boolean existsByEmail(String email);
 
+    // Count all accounts
+    @Query("SELECT COUNT(c) FROM Customer c")
+    long countAccounts();
 
-    // 3. JPQL COUNT - Count emails
+    // Count customers with a specific email
     @Query("SELECT COUNT(c) FROM Customer c WHERE c.email = :email")
     long countEmails(@Param("email") String email);
 
-
-    // 4. JPQL ORDER BY - Find all customers ordered by name
+    // Find all customers ordered by name
     @Query("SELECT c FROM Customer c ORDER BY c.fullName ASC")
     List<Customer> findAllOrdered();
 
-
-    // 5. JPQL LIKE - Search customers by name
+    // Search customers by name
     @Query("SELECT c FROM Customer c WHERE LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Customer> searchByName(@Param("keyword") String keyword);
 
-
-    // 6. JPQL Aggregate - Calculate total balance
-    @Query("SELECT SUM(c.balance) FROM Customer c")
+    // Get total balance
+    @Query("SELECT COALESCE(SUM(c.balance), 0) FROM Customer c")
     BigDecimal getTotalBalance();
 
-
-    // 7. Native SQL - Count all customers
+    // Native query to count customers
     @Query(value = "SELECT COUNT(*) FROM customers", nativeQuery = true)
     long countCustomersNative();
 
-
-    // 8. UPDATE - Debit customer account
-    @Modifying(clearAutomatically = true)
+    // Debit customer account
+    @Modifying
     @Transactional
-    @Query("UPDATE Customer c SET c.balance = c.balance - :amount WHERE c.accountNumber = :accountNumber AND c.balance >= :amount")
-    int debit(@Param("accountNumber") String accountNumber,
-              @Param("amount") BigDecimal amount);
+    @Query("UPDATE Customer c SET c.balance = c.balance - :amount WHERE c.accountNumber = :accountNumber")
+    int debit(
+            @Param("accountNumber") String accountNumber,
+            @Param("amount") BigDecimal amount
+    );
 
-
-    // 9. UPDATE - Credit customer account
-    @Modifying(clearAutomatically = true)
+    // Credit customer account
+    @Modifying
     @Transactional
     @Query("UPDATE Customer c SET c.balance = c.balance + :amount WHERE c.accountNumber = :accountNumber")
-    int credit(@Param("accountNumber") String accountNumber,
-               @Param("amount") BigDecimal amount);
+    int credit(
+            @Param("accountNumber") String accountNumber,
+            @Param("amount") BigDecimal amount
+    );
 }

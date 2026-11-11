@@ -60,13 +60,22 @@ public class BankController {
     // Transfer Money
     @PostMapping("/transfer")
     public String transfer(
-            @Valid @ModelAttribute TransferRequest request,
+            @Valid @ModelAttribute("transferRequest") TransferRequest request,
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
+
             loadDashboard(model, null);
+
+            model.addAttribute("transferRequest", request);
+
+            model.addAttribute(
+                    BindingResult.MODEL_KEY_PREFIX + "transferRequest",
+                    result
+            );
+
             return "bank";
         }
 

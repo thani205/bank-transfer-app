@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Transfer Dashboard</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,57 +12,99 @@
             background: #f4f6f9;
             color: #222;
         }
-        h1, h2 { color: #17365d; }
+
+        h1, h2 {
+            color: #17365d;
+        }
+
         section {
             background: white;
             padding: 20px;
             margin-bottom: 25px;
             border-radius: 8px;
         }
+
         input, button {
             padding: 10px;
             margin: 5px;
         }
+
         button {
             background: #17365d;
             color: white;
             border: none;
             cursor: pointer;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
+
         th, td {
             padding: 12px;
             border: 1px solid #ddd;
             text-align: left;
         }
-        th { background: #17365d; color: white; }
-        .success { color: green; }
-        .error { color: red; }
+
+        th {
+            background: #17365d;
+            color: white;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+            margin: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
+
 <body>
 
 <h1>Bank Transfer System</h1>
 
-<p class="success" th:if="${successMessage}" th:text="${successMessage}"></p>
-<p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+<p class="success"
+   th:if="${successMessage}"
+   th:text="${successMessage}">
+</p>
 
+<p class="error"
+   th:if="${errorMessage}"
+   th:text="${errorMessage}">
+</p>
+
+<!-- Bank Statistics -->
 <section>
     <h2>Bank Statistics</h2>
-    <p>Total Balance: LKR <strong th:text="${totalBalance}"></strong></p>
-    <p>Successful Transactions: <strong th:text="${successCount}"></strong></p>
-    <p>Failed Transactions: <strong th:text="${failedCount}"></strong></p>
+
+    <p>Total Balance: LKR
+        <strong th:text="${totalBalance}"></strong>
+    </p>
+
+    <p>Successful Transactions:
+        <strong th:text="${successCount}"></strong>
+    </p>
+
+    <p>Failed Transactions:
+        <strong th:text="${failedCount}"></strong>
+    </p>
 </section>
 
+<!-- Customers -->
 <section>
     <h2>Customers</h2>
 
     <form method="get" action="/">
-        <input type="text" name="keyword" placeholder="Search customer name">
+        <input type="text"
+               name="keyword"
+               placeholder="Search customer name">
+
         <button type="submit">Search</button>
         <a href="/">Show All</a>
     </form>
@@ -76,12 +119,14 @@
             <th>History</th>
         </tr>
         </thead>
+
         <tbody>
         <tr th:each="customer : ${customers}">
             <td th:text="${customer.accountNumber}"></td>
             <td th:text="${customer.fullName}"></td>
             <td th:text="${customer.email}"></td>
             <td th:text="${customer.balance}"></td>
+
             <td>
                 <a th:href="@{/accounts/{accountNumber}/history(accountNumber=${customer.accountNumber})}">
                     View History
@@ -92,36 +137,97 @@
     </table>
 </section>
 
+<!-- Add Customer -->
 <section>
     <h2>Add Customer</h2>
-    <form action="/customers" method="post" th:object="${customer}">
-        <input type="text" th:field="*{accountNumber}" placeholder="Account Number" required>
-        <input type="text" th:field="*{fullName}" placeholder="Full Name" required>
-        <input type="email" th:field="*{email}" placeholder="Email" required>
-        <input type="number" step="0.01" min="0" th:field="*{balance}" placeholder="Initial Balance" required>
+
+    <form action="/customers"
+          method="post"
+          th:object="${customer}">
+
+        <input type="text"
+               th:field="*{accountNumber}"
+               placeholder="Account Number"
+               required>
+
+        <input type="text"
+               th:field="*{fullName}"
+               placeholder="Full Name"
+               required>
+
+        <input type="email"
+               th:field="*{email}"
+               placeholder="Email"
+               required>
+
+        <input type="number"
+               step="0.01"
+               min="0"
+               th:field="*{balance}"
+               placeholder="Initial Balance"
+               required>
+
         <button type="submit">Add Customer</button>
     </form>
 </section>
 
+<!-- Transfer Money -->
 <section>
     <h2>Transfer Money</h2>
-    <form action="/transfer" method="post" th:object="${transferRequest}">
-        <input type="text" th:field="*{fromAccount}" placeholder="Sender Account" required>
-        <input type="text" th:field="*{toAccount}" placeholder="Receiver Account" required>
-        <input type="number" step="0.01" min="0.01" th:field="*{amount}" placeholder="Amount (LKR)" required>
+
+    <form action="/transfer"
+          method="post"
+          th:object="${transferRequest}">
+
+        <input type="text"
+               th:field="*{fromAccount}"
+               placeholder="Sender Account"
+               required>
+
+        <div class="error"
+             th:if="${#fields.hasErrors('fromAccount')}"
+             th:errors="*{fromAccount}">
+        </div>
+
+        <input type="text"
+               th:field="*{toAccount}"
+               placeholder="Receiver Account"
+               required>
+
+        <div class="error"
+             th:if="${#fields.hasErrors('toAccount')}"
+             th:errors="*{toAccount}">
+        </div>
+
+        <input type="number"
+               step="0.01"
+               min="0.01"
+               th:field="*{amount}"
+               placeholder="Amount (LKR)"
+               required>
+
+        <div class="error"
+             th:if="${#fields.hasErrors('amount')}"
+             th:errors="*{amount}">
+        </div>
 
         <label>
-            <input type="checkbox" th:field="*{simulateFailure}">
+            <input type="checkbox"
+                   th:field="*{simulateFailure}">
             Simulate a system failure
         </label>
 
         <br>
+
         <button type="submit">Transfer Money</button>
+
     </form>
 </section>
 
+<!-- Latest Transactions -->
 <section>
     <h2>Latest Transactions</h2>
+
     <table>
         <thead>
         <tr>
@@ -133,6 +239,7 @@
             <th>Description</th>
         </tr>
         </thead>
+
         <tbody>
         <tr th:each="transaction : ${transactions}">
             <td th:text="${transaction.createdAt}"></td>
